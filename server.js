@@ -2,6 +2,8 @@ const mysql = require('mysql');
 const inquirer = require('inquirer');
 const cTable = require('console.table');
 
+let positions = ['Accountant', 'Sales Lead', 'Intern', 'Junior Developer', 'Senior Developer', 'Graphic Designer', 'Laywer'];
+
 const connection = mysql.createConnection({
     host: 'localhost',
     port: 3306,
@@ -32,12 +34,13 @@ const startApp = () => {
             dbSearch('id');
         } else if(response.choice === 'Update Employee Role') {
             updateEmployee('role');
+        } else if(response.choice === 'Update Employee Manager') {
+            updateEmployee('manager');
         }
     })
 }
 
 const addEmployee = () => {
-    let positions = ['Accountant', 'Sales Lead', 'Intern', 'Junior Developer', 'Senior Developer', 'Graphic Designer', 'Laywer'];
     inquirer.prompt([{
         type: 'input',
         message: 'First name:',
@@ -60,9 +63,6 @@ const addEmployee = () => {
             role_id: roleId
         }, (err, results) => {
             if(err) throw err;
-            for(let i = 0; i < results.length; i++) {
-                results[i].id = i + 1;
-            }
         })
         startApp();
     })
@@ -137,7 +137,23 @@ const updateEmployee = (query) => {
                 return choiceArr;
             }
         }]).then((response) => {
-            let choiceId = response.choice.split(" ")[0];
+            let choiceId = parseInt(response.choice.split(" ")[0]);
+            if(query === 'role') {
+                inquirer.prompt([{
+                    type: 'list',
+                    message: 'What role should this person be updated to?',
+                    choices: positions,
+                    name: 'role'
+                }]).then((response) => {
+                    let roleId = positions.indexOf(response.role) + 1;
+                    connection.query('UPDATE employee SET role_id=? WHERE id=?', [roleId, choiceId], (err) => {
+                        if (err) throw err;
+                    })
+                    startApp();
+                })
+            } else if(query === 'manager') {
+
+            }
         })
     })
 }
