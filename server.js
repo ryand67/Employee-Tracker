@@ -28,11 +28,16 @@ const startApp = () => {
             connection.end();
         } else if(response.choice === "Remove Employee") {
             removeEmployee();
+        } else if(response.choice === 'View All Employees') {
+            dbSearch('id');
+        } else if(response.choice === 'Update Employee Role') {
+            updateEmployee('role');
         }
     })
 }
 
 const addEmployee = () => {
+    let positions = ['Accountant', 'Sales Lead', 'Intern', 'Junior Developer', 'Senior Developer', 'Graphic Designer', 'Laywer'];
     inquirer.prompt([{
         type: 'input',
         message: 'First name:',
@@ -44,24 +49,11 @@ const addEmployee = () => {
     },{
         type: 'list',
         message: 'Role:',
-        choices: ['Intern', 'Junior Developer', 'Senior Developer'],
+        choices: positions,
         name: 'role'
     }
     ]).then((response) => {
-        let roleId;
-        switch(response.role) {
-            case 'Intern':
-                roleId = 1;
-                break;
-
-            case 'Junior Developer':
-                roleId = 2;
-                break;
-
-            case 'Senior Developer':
-                roleId = 3;
-                break;
-        }
+        let roleId = positions.indexOf(response.role) + 1;
         connection.query('INSERT INTO employee SET ?', {
             first_name: response.firstName,
             last_name: response.lastName,
@@ -78,6 +70,7 @@ const addEmployee = () => {
 
 const removeEmployee = () => {
     connection.query('SELECT * FROM employee', (err, result) => {
+        if(err) throw err;
         inquirer.prompt([{
             type: 'list',
             message: 'Which employee would you like to remove?',
@@ -117,6 +110,34 @@ const resetID = () => {
             connection.query('INSERT INTO employee SET ?', backup, (err) => {
                 if(err) throw err;
             })
+        })
+    })
+}
+
+const dbSearch = (query) => {
+    connection.query('SELECT * FROM employee ORDER BY ?', query, (err, result) => {
+        if(err) throw err;
+        console.table(result);
+        setTimeout(startApp, 1000);
+    })
+}
+
+const updateEmployee = (query) => {
+    connection.query('SELECT * FROM employee', (err, result) => {
+        if(err) throw err;
+        inquirer.prompt([{
+            type: 'list',
+            message: 'Which employee do you want to update?',
+            name: 'choice',
+            choices: () => {
+                let choiceArr = [];
+                for(let i = 0; i < result.length; i++) {
+                    choiceArr.push(`${result[i].id} ${result[i].first_name} ${result[i].last_name}`);
+                }
+                return choiceArr;
+            }
+        }]).then((response) => {
+            let choiceId = response.choice.split(" ")[0];
         })
     })
 }
