@@ -27,7 +27,7 @@ const startApp = () => {
         } else if(response.choice === "Exit") {
             connection.end();
         } else if(response.choice === "Remove Employee") {
-            
+            removeEmployee();
         }
     })
 }
@@ -73,5 +73,28 @@ const addEmployee = () => {
             }
         })
         startApp();
+    })
+}
+
+const removeEmployee = () => {
+    connection.query('SELECT * FROM employee', (err, result) => {
+        inquirer.prompt([{
+            type: 'list',
+            message: 'Which employee would you like to remove?',
+            name: 'choice',
+            choices: () => {
+                let choiceArr = [];
+                for(let i = 0; i < result.length; i++) {
+                    choiceArr.push(`${result[i].first_name} ${result[i].last_name}`);
+                }
+                return choiceArr;
+            }
+        }]).then((response) => {
+            let choiceName = response.choice.split(' ')[0];
+            connection.query('DELETE FROM employee WHERE first_name=?', [choiceName], (err, result) => {
+                if(err) throw err;
+                startApp();
+            })
+        })
     })
 }
