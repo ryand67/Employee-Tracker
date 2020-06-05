@@ -93,7 +93,29 @@ const removeEmployee = () => {
             let choiceName = response.choice.split(' ')[0];
             connection.query('DELETE FROM employee WHERE first_name=?', [choiceName], (err, result) => {
                 if(err) throw err;
+                resetID();
                 startApp();
+            })
+        })
+    })
+}
+
+const resetID = () => {
+    connection.query('SELECT * FROM employee', (err, result) => {
+        if(err) throw err;
+        let backup = [];
+        for(let i = 0; i < result.length; i++) {
+            let holder = {
+                first_name: result[i].first_name,
+                last_name: result[i].last_name,
+                role_id: result[i].role_id
+            }
+            backup.push(holder);
+        }
+        connection.query('TRUNCATE TABLE employee', (err) => {
+            if(err) throw err;
+            connection.query('INSERT INTO employee SET ?', backup, (err) => {
+                if(err) throw err;
             })
         })
     })
