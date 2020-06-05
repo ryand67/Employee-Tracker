@@ -71,6 +71,11 @@ const addEmployee = () => {
 const removeEmployee = () => {
     connection.query('SELECT * FROM employee', (err, result) => {
         if(err) throw err;
+        if(result.length === 0) {
+            console.log(`No one to remove!`);
+            startApp();
+            return;
+        }
         inquirer.prompt([{
             type: 'list',
             message: 'Which employee would you like to remove?',
@@ -96,6 +101,7 @@ const removeEmployee = () => {
 const resetID = () => {
     connection.query('SELECT * FROM employee', (err, result) => {
         if(err) throw err;
+        if(result.length === 0) return;
         let backup = [];
         for(let i = 0; i < result.length; i++) {
             let holder = {
@@ -115,7 +121,10 @@ const resetID = () => {
 }
 
 const dbSearch = (query) => {
-    connection.query('SELECT * FROM employee ORDER BY ?', query, (err, result) => {
+    if(query === 'id') {
+        query = 'employee.id';
+    }
+    connection.query('SELECT employee.id, employee.first_name, employee.last_name, role.title, role.salary FROM employee LEFT JOIN role ON employee.role_id=role.id ORDER BY ?', query, (err, result) => {
         if(err) throw err;
         console.table(result);
         setTimeout(startApp, 1000);
