@@ -24,7 +24,7 @@ const startApp = () => {
     inquirer.prompt([{
         type: 'list',
         message: 'What would you like to do?',
-        choices: ['View All Employees', 'View All Employees by Department', 'View All Employees by Role', 'View Roles', 'View Departments', 'Add Employee', 'Add Role', 'Add Department' , 'Update Employee Role', 'Remove Employee' , 'View Total Utilized Budget', 'Exit'],
+        choices: ['View All Employees', 'View All Employees by Department', 'View All Employees by Role', 'View Roles', 'View Departments', 'Add Employee', 'Add Role', 'Add Department' , 'Update Employee Role', 'Remove Employee', 'Remove Role','View Total Utilized Budget', 'Exit'],
         name: 'choice'
     }]).then((response) => {
         //Trigger function based on menu option
@@ -52,6 +52,8 @@ const startApp = () => {
             addDepartment();
         } else if(response.choice === 'View Departments') {
             viewDepartments();
+        } else if(response.choice === 'Remove Role') {
+            removeRole();
         }
     })
 }
@@ -278,6 +280,7 @@ const addRole = () => {
                 department_id: depChoiceId
             }, (err) => {
                 if(err) throw err;
+                positions = getRoles();
             })
             startApp();
         })
@@ -318,4 +321,29 @@ const viewDepartments = () => {
         }
     })
     setTimeout(startApp, 1000);
+}
+
+const removeRole = () => {
+    connection.query('SELECT id, title FROM role', (err, result) => {
+        if(err) throw err;
+        inquirer.prompt([{
+            type: 'list',
+            message: 'Which role do you want to remove?',
+            name: 'choice',
+            choices: () => {
+                let choiceArr = [];
+                for(let i = 0; i < result.length; i++) {
+                    choiceArr.push(`${result[i].id}) ${result[i].title}`)
+                }
+                return choiceArr;
+            }
+        }]).then((response) => {
+            let choiceId = parseInt(response.choice.charAt(0));
+            connection.query('DELETE FROM role WHERE id=?', choiceId, (err) => {
+                if(err) throw err;
+                positions = getRoles();
+                startApp();
+            })
+        })
+    })
 }
