@@ -2,7 +2,7 @@ const mysql = require('mysql');
 const inquirer = require('inquirer');
 const cTable = require('console.table');
 
-let positions = ['Accountant', 'Sales Lead', 'Intern', 'Junior Developer', 'Senior Developer', 'Graphic Designer', 'Laywer'];
+let positions = ['Accountant', 'Sales Lead', 'Design Intern', 'Junior Developer', 'Senior Developer', 'Graphic Designer', 'Laywer'];
 
 const connection = mysql.createConnection({
     host: 'localhost',
@@ -34,8 +34,10 @@ const startApp = () => {
             dbSearch('id');
         } else if(response.choice === 'Update Employee Role') {
             updateEmployee('role');
-        } else if(response.choice === 'Update Employee Manager') {
-            updateEmployee('manager');
+        } else if(response.choice === 'View All Employees by Department') {
+            dbSearch('department');
+        } else if(response.choice === 'View All Employees by Role') {
+            dbSearch('role');
         }
     })
 }
@@ -72,7 +74,7 @@ const removeEmployee = () => {
     connection.query('SELECT * FROM employee', (err, result) => {
         if(err) throw err;
         if(result.length === 0) {
-            console.log(`No one to remove!`);
+            console.log(`Nothing to remove!`);
             startApp();
             return;
         }
@@ -83,13 +85,13 @@ const removeEmployee = () => {
             choices: () => {
                 let choiceArr = [];
                 for(let i = 0; i < result.length; i++) {
-                    choiceArr.push(`${result[i].first_name} ${result[i].last_name}`);
+                    choiceArr.push(`${result[i].id} ${result[i].first_name} ${result[i].last_name}`);
                 }
                 return choiceArr;
             }
         }]).then((response) => {
-            let choiceName = response.choice.split(' ')[0];
-            connection.query('DELETE FROM employee WHERE first_name=?', [choiceName], (err, result) => {
+            let choiceId = parseInt(response.choice.split(' ')[0]);
+            connection.query('DELETE FROM employee WHERE id=?', choiceId, (err, result) => {
                 if(err) throw err;
                 resetID();
                 startApp();
@@ -101,7 +103,6 @@ const removeEmployee = () => {
 const resetID = () => {
     connection.query('SELECT * FROM employee', (err, result) => {
         if(err) throw err;
-        if(result.length === 0) return;
         let backup = [];
         for(let i = 0; i < result.length; i++) {
             let holder = {
@@ -123,9 +124,16 @@ const resetID = () => {
 const dbSearch = (query) => {
     if(query === 'id') {
         query = 'employee.id';
+    } else if(query === 'department') {
+        query = 'department.id';
+    } else if(query === 'role') {
+        query = 'role.id';
     }
-    connection.query('SELECT employee.id, employee.first_name, employee.last_name, role.title, role.salary FROM employee LEFT JOIN role ON employee.role_id=role.id ORDER BY ?', query, (err, result) => {
+    connection.query(`SELECT employee.id, employee.first_name, employee.last_name, role.title, role.salary, department.name FROM employee LEFT JOIN role ON employee.role_id=role.id INNER JOIN department ON role.department_id = department.id ORDER BY ${query}`, (err, result) => {
         if(err) throw err;
+        if(result.length === 0) {
+            console.log('NOTHING TO DISPLAY');
+        }
         console.table(result);
         setTimeout(startApp, 1000);
     })
