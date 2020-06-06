@@ -24,7 +24,7 @@ const startApp = () => {
     inquirer.prompt([{
         type: 'list',
         message: 'What would you like to do?',
-        choices: ['View All Employees', 'View All Employees by Department', 'View All Employees by Role', 'View Roles' , 'Add Employee', 'Add Role', 'Update Employee Role', 'Remove Employee' , 'View Total Utilized Budget', 'Exit'],
+        choices: ['View All Employees', 'View All Employees by Department', 'View All Employees by Role', 'View Roles' , 'Add Employee', 'Add Role', 'Add Department' , 'Update Employee Role', 'Remove Employee' , 'View Total Utilized Budget', 'Exit'],
         name: 'choice'
     }]).then((response) => {
         //Trigger function based on menu option
@@ -46,6 +46,10 @@ const startApp = () => {
             utilizedBudget();
         } else if(response.choice === 'Add Role') {
             addRole();
+        } else if(response.choice === 'View Roles') {
+            viewRoles();
+        } else if(response.choice === 'Add Department') {
+            addDepartment();
         }
     })
 }
@@ -128,7 +132,7 @@ const removeEmployee = () => {
             connection.query('DELETE FROM employee WHERE id=?', choiceId, (err) => {
                 if(err) throw err;
                 //Resets the id list and goes back to main menu
-                resetID('employee');
+                resetEmployeeID();
                 startApp();
             })
         })
@@ -136,7 +140,7 @@ const removeEmployee = () => {
 }
 
 //Resets the id so when an employee gets deleted so the list stays correct
-const resetID = (query) => {
+const resetEmployeeID = () => {
     //Grab all of the employees
     connection.query('SELECT * FROM employee', (err, result) => {
         if(err) throw err;
@@ -152,7 +156,7 @@ const resetID = (query) => {
             backup.push(holder);
         }
         //Remove all rows from the table
-        connection.query(`TRUNCATE TABLE ${query}`, (err) => {
+        connection.query(`TRUNCATE TABLE employee`, (err) => {
             if(err) throw err;
             //Insert into the table, the array of objects we just created, now with a reset auto incrememnt count for id
             connection.query('INSERT INTO employee SET ?', backup, (err) => {
@@ -265,7 +269,7 @@ const addRole = () => {
                 return deptChoices;
             }
         }]).then((response) => {
-            let depChoiceId = response.department.split(' ')[0];
+            let depChoiceId = parseInt(response.department.split(' ')[0]);
             connection.query('INSERT INTO role SET ?', {
                 title: response.title,
                 salary: response.salary,
@@ -273,6 +277,33 @@ const addRole = () => {
             }, (err) => {
                 if(err) throw err;
             })
+            startApp();
         })
     })
+}
+
+const viewRoles = () => {
+    connection.query('SELECT title, id FROM role', (err, result) => {
+        if(err) throw err;
+        for(let i = 0; i < result.length; i++) {
+            console.log(`${result[i].id}) ${result[i].title}`)
+        }
+    })
+    setTimeout(startApp, 1000);
+}
+
+const addDepartment = () => {
+    inquirer.prompt([{
+        type: 'input',
+        message: 'Deparment Name:',
+        name: 'name'
+    }]).then((response) => {
+        let holder = {
+            name: response.name
+        }
+        connection.query(`INSERT INTO department SET ?`, holder, (err) => {
+            if(err) throw err;
+        })
+    })
+    startApp();
 }
