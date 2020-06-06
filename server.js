@@ -3,9 +3,6 @@ const mysql = require('mysql');
 const inquirer = require('inquirer');
 const cTable = require('console.table');
 
-//Available positions to grab from
-let positions = ['Accountant', 'Sales Lead', 'Design Intern', 'Junior Developer', 'Senior Developer', 'Graphic Designer', 'Laywer'];
-
 //Create mysql connection
 const connection = mysql.createConnection({
     host: 'localhost',
@@ -27,7 +24,7 @@ const startApp = () => {
     inquirer.prompt([{
         type: 'list',
         message: 'What would you like to do?',
-        choices: ['View All Employees', 'View All Employees by Department', 'View All Employees by Role', 'Add Employee', 'Remove Employee', 'Update Employee Role', 'View Total Utilized Budget', 'Exit'],
+        choices: ['View All Employees', 'View All Employees by Department', 'View All Employees by Role', 'View Roles' , 'Add Employee', 'Add Role', 'Update Employee Role', 'Remove Employee' , 'View Total Utilized Budget', 'Exit'],
         name: 'choice'
     }]).then((response) => {
         //Trigger function based on menu option
@@ -38,18 +35,34 @@ const startApp = () => {
         } else if(response.choice === "Remove Employee") {
             removeEmployee();
         } else if(response.choice === 'View All Employees') {
-            dbSearch('employee.id');
+            employeeSearch('employee.id');
         } else if(response.choice === 'Update Employee Role') {
             updateEmployee('role');
         } else if(response.choice === 'View All Employees by Department') {
-            dbSearch('department.id');
+            employeeSearch('department.id');
         } else if(response.choice === 'View All Employees by Role') {
-            dbSearch('role.id');
+            employeeSearch('role.id');
         } else if(response.choice === 'View Total Utilized Budget') {
             utilizedBudget();
+        } else if(response.choice === 'Add Role') {
+            addRole();
         }
     })
 }
+
+//Grabs array of available roles
+const getRoles = () => {
+    let positions = new Array();
+    connection.query('SELECT title FROM role', (err, result) => {
+        if(err) throw err;
+        for(let i = 0; i < result.length; i++) {
+            positions.push(result[i].title);
+        }
+    })
+    return positions;
+}
+
+let positions = getRoles();
 
 //Add employee to the database
 const addEmployee = () => {
@@ -76,7 +89,7 @@ const addEmployee = () => {
             first_name: response.firstName,
             last_name: response.lastName,
             role_id: roleId
-        }, (err, results) => {
+        }, (err) => {
             if(err) throw err;
         })
         //Go back to the main menu
@@ -104,7 +117,7 @@ const removeEmployee = () => {
                 let choiceArr = [];
                 for(let i = 0; i < result.length; i++) {
                     //Broken up like this to split the id out of it
-                    choiceArr.push(`${result[i].id} ${result[i].first_name} ${result[i].last_name}`);
+                    choiceArr.push(`${result[i].id}) ${result[i].first_name} ${result[i].last_name}`);
                 }
                 return choiceArr;
             }
@@ -115,7 +128,7 @@ const removeEmployee = () => {
             connection.query('DELETE FROM employee WHERE id=?', choiceId, (err) => {
                 if(err) throw err;
                 //Resets the id list and goes back to main menu
-                resetID();
+                resetID('employee');
                 startApp();
             })
         })
@@ -123,7 +136,7 @@ const removeEmployee = () => {
 }
 
 //Resets the id so when an employee gets deleted so the list stays correct
-const resetID = () => {
+const resetID = (query) => {
     //Grab all of the employees
     connection.query('SELECT * FROM employee', (err, result) => {
         if(err) throw err;
@@ -139,7 +152,7 @@ const resetID = () => {
             backup.push(holder);
         }
         //Remove all rows from the table
-        connection.query('TRUNCATE TABLE employee', (err) => {
+        connection.query(`TRUNCATE TABLE ${query}`, (err) => {
             if(err) throw err;
             //Insert into the table, the array of objects we just created, now with a reset auto incrememnt count for id
             connection.query('INSERT INTO employee SET ?', backup, (err) => {
@@ -150,7 +163,7 @@ const resetID = () => {
 }
 
 //View database function
-const dbSearch = (query) => {
+const employeeSearch = (query) => {
     //Grab name, role title, salary, and department name
     //Join the role table matching role_id with role.id
     //Join the department table where department_id equals department.id
@@ -180,7 +193,7 @@ const updateEmployee = (query) => {
             choices: () => {
                 let choiceArr = [];
                 for(let i = 0; i < result.length; i++) {
-                    choiceArr.push(`${result[i].id} ${result[i].first_name} ${result[i].last_name}`);
+                    choiceArr.push(`${result[i].id}) ${result[i].first_name} ${result[i].last_name}`);
                 }
                 return choiceArr;
             }
@@ -221,8 +234,45 @@ const utilizedBudget = () => {
             totalBudget += result[i].salary;
         }
         //Logs the total budget
-        console.log(`TOTAL UTILIZED BUDGET ${totalBudget}`)
+        console.log(`
+        TOTAL UTILIZED BUDGET: ${totalBudget}
+        `)
     })
     //Wait one second to launch main menu to not interfere with console logs
     setTimeout(startApp, 1000);
+}
+
+const addRole = () => {
+    connection.query('SELECT * FROM department', (err, result) => {
+        if(err) throw err;
+        inquirer.prompt([{
+            type: 'input',
+            message: 'Role title:',
+            name: 'title'
+        },{
+            type: 'input',
+            message: 'Salary:',
+            name: 'salary'
+        },{
+            type: 'list',
+            message: 'Department',
+            name: 'department',
+            choices: () => {
+                let deptChoices = [];
+                for(let i = 0; i < result.length; i++) {
+                    deptChoices.push(`${result[i].id}) ${result[i].name}`);
+                }
+                return deptChoices;
+            }
+        }]).then((response) => {
+            let depChoiceId = response.department.split(' ')[0];
+            connection.query('INSERT INTO role SET ?', {
+                title: response.title,
+                salary: response.salary,
+                department_id: depChoiceId
+            }, (err) => {
+                if(err) throw err;
+            })
+        })
+    })
 }
