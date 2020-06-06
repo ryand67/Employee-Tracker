@@ -27,7 +27,7 @@ const startApp = () => {
     inquirer.prompt([{
         type: 'list',
         message: 'What would you like to do?',
-        choices: ['View All Employees', 'View All Employees by Department', 'View All Employees by Role', 'Add Employee', 'Remove Employee', 'Update Employee Role', 'Update Employee Manager', 'Exit'],
+        choices: ['View All Employees', 'View All Employees by Department', 'View All Employees by Role', 'Add Employee', 'Remove Employee', 'Update Employee Role', 'View Total Utilized Budget', 'Exit'],
         name: 'choice'
     }]).then((response) => {
         //Trigger function based on menu option
@@ -45,6 +45,8 @@ const startApp = () => {
             dbSearch('department.id');
         } else if(response.choice === 'View All Employees by Role') {
             dbSearch('role.id');
+        } else if(response.choice === 'View Total Utilized Budget') {
+            utilizedBudget();
         }
     })
 }
@@ -206,4 +208,21 @@ const updateEmployee = (query) => {
             }
         })
     })
+}
+
+//Console logs the total amount paid on salaries
+const utilizedBudget = () => {
+    //Grabs just salary for all employees
+    connection.query('SELECT salary FROM employee LEFT JOIN role ON employee.role_id=role.id', (err, result) => {
+        if(err) throw err;
+        //Add each salary to total budget
+        let totalBudget = 0;
+        for(let i = 0; i < result.length; i++) {
+            totalBudget += result[i].salary;
+        }
+        //Logs the total budget
+        console.log(`TOTAL UTILIZED BUDGET ${totalBudget}`)
+    })
+    //Wait one second to launch main menu to not interfere with console logs
+    setTimeout(startApp, 1000);
 }
