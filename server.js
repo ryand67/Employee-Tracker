@@ -24,7 +24,7 @@ const startApp = () => {
     inquirer.prompt([{
         type: 'list',
         message: 'What would you like to do?',
-        choices: ['View All Employees', 'View All Employees by Department', 'View All Employees by Role', 'View Roles', 'View Departments', 'View Total Utilized Budget', 'Add Employee', 'Add Role', 'Add Department' , 'Update Employee Role', 'Remove Employee', 'Remove Role', 'Remove Department','Exit'],
+        choices: ['View All Employees', 'View All Employees by Department', 'View All Employees by Role', 'View Roles', 'View Departments', 'View Total Utilized Budget', 'Add Employee', 'Add Role', 'Add Department' , 'Update Employee Role', 'Update Role', 'Remove Employee', 'Remove Role', 'Remove Department','Exit'],
         name: 'choice'
     }]).then((response) => {
         //Trigger function based on menu option
@@ -56,6 +56,8 @@ const startApp = () => {
             removeRole();
         } else if(response.choice === 'Remove Departments') {
             removeDepartment();
+        } else if(response.choice === 'Update Role') {
+            updateRole();
         }
     })
 }
@@ -292,11 +294,9 @@ const addRole = () => {
 
 //Views available roles
 const viewRoles = () => {
-    connection.query('SELECT title, id FROM role', (err, result) => {
+    connection.query('SELECT * FROM role', (err, result) => {
         if(err) throw err;
-        for(let i = 0; i < result.length; i++) {
-            console.log(`${result[i].id}) ${result[i].title}`)
-        }
+        console.table(result);
     })
     setTimeout(startApp, 1000);
 }
@@ -318,11 +318,9 @@ const addDepartment = () => {
 }
 
 const viewDepartments = () => {
-    connection.query('SELECT id, name FROM department', (err, result) => {
+    connection.query('SELECT * FROM department', (err, result) => {
         if(err) throw err;
-        for(let i = 0; i < result.length; i++) {
-            console.log(`${result[i].id}) ${result[i].name}`)
-        }
+        console.table(result);
     })
     setTimeout(startApp, 1000);
 }
@@ -425,6 +423,59 @@ const resetDepartmentId = () => {
             //Insert into the table, the array of objects we just created, now with a reset auto incrememnt count for id
             connection.query('INSERT INTO role SET ?', backup, (err) => {
                 if(err) throw err;
+            })
+        })
+    })
+}
+
+const updateRole = () => {
+    connection.query('SELECT * FROM role', (err, result) => {
+        if(err) throw err;
+        inquirer.prompt([{
+            type: 'list',
+            message: 'Which role do you want to update?',
+            name: 'choice',
+            choices: () => {
+                let choiceArr = [];
+                for(let i = 0; i < result.length; i++) {
+                    choiceArr.push(`${result[i].id}) ${result[i].title}`)
+                }
+                return choiceArr;
+            }
+        }]).then((response) => {
+            let choiceId = response.choice.charAt(0);
+            connection.query('SELECT name FROM department', (err, result) => {
+                if(err) throw err;
+                inquirer.prompt([{
+                    type: 'input',
+                    message: 'New Title:',
+                    name: 'title'
+                },{
+                    type: 'input',
+                    message: 'New Salary:',
+                    name: 'salary'
+                },{
+                    type: 'list',
+                    message: 'New Department',
+                    name: 'department',
+                    choices: () => {
+                        let choiceArr = [];
+                        for(let i = 0; i < result.length; i++) {
+                            choiceArr.push(`${i + 1}) ${result[i].name}`);
+                        }
+                        return choiceArr;
+                    }
+                }]).then((response2) => {
+                    let holder = {
+                        title: response2.title,
+                        salary: response2.salary,
+                        department_id: parseInt(response2.department.charAt(0))
+                    }
+                    connection.query('UPDATE role SET ? WHERE id=?', [holder, choiceId], (err) => {
+                        if(err) throw err;
+                        startApp();
+                    })
+                })
             })
         })
     })
