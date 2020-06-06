@@ -24,7 +24,7 @@ const startApp = () => {
     inquirer.prompt([{
         type: 'list',
         message: 'What would you like to do?',
-        choices: ['View All Employees', 'View All Employees by Department', 'View All Employees by Role', 'View Roles', 'View Departments', 'Add Employee', 'Add Role', 'Add Department' , 'Update Employee Role', 'Remove Employee', 'Remove Role','View Total Utilized Budget', 'Exit'],
+        choices: ['View All Employees', 'View All Employees by Department', 'View All Employees by Role', 'View Roles', 'View Departments', 'View Total Utilized Budget', 'Add Employee', 'Add Role', 'Add Department' , 'Update Employee Role', 'Remove Employee', 'Remove Role', 'Remove Department','Exit'],
         name: 'choice'
     }]).then((response) => {
         //Trigger function based on menu option
@@ -54,6 +54,8 @@ const startApp = () => {
             viewDepartments();
         } else if(response.choice === 'Remove Role') {
             removeRole();
+        } else if(response.choice === 'Remove Departments') {
+            removeDepartment();
         }
     })
 }
@@ -342,7 +344,84 @@ const removeRole = () => {
             connection.query('DELETE FROM role WHERE id=?', choiceId, (err) => {
                 if(err) throw err;
                 positions = getRoles();
+                resetRoleId();
                 startApp();
+            })
+        })
+    })
+}
+
+//Resets the id so when an employee gets deleted so the list stays correct
+const resetRoleId = () => {
+    //Grab all of the employees
+    connection.query('SELECT * FROM role', (err, result) => {
+        if(err) throw err;
+        //Create holder variable for the entries
+        let backup = [];
+        //Loops through the results, pushing each entry into the backup array
+        for(let i = 0; i < result.length; i++) {
+            let holder = {
+                title: result[i].title,
+                salary: result[i].salary,
+                department_id: result[i].department_id
+            }
+            backup.push(holder);
+        }
+        //Remove all rows from the table
+        connection.query(`TRUNCATE TABLE role`, (err) => {
+            if(err) throw err;
+            //Insert into the table, the array of objects we just created, now with a reset auto incrememnt count for id
+            connection.query('INSERT INTO role SET ?', backup, (err) => {
+                if(err) throw err;
+            })
+        })
+    })
+}
+
+const removeDepartment = () => {
+    connection.query('SELECT * FROM department', (err, result) => {
+        if(err) throw err;
+        inquirer.prompt([{
+            type: 'list',
+            message: 'Which department do you want to remove?',
+            name: 'choice',
+            choices: () => {
+                let choiceArr = [];
+                for(let i = 0; i < result.length; i++) {
+                    choiceArr.push(`${result[i].id}) ${result[i].name}`);
+                }
+                return choiceArr;
+            }
+        }]).then((response) => {
+            let chioceId = response.choice.charAt(0);
+            connection.query('DELETE FROM department WHERE id=?', choiceId, (err) => {
+                if(err) throw err;
+                resetDepartmentId();
+            })
+        })
+    })
+}
+
+//Resets the id so when an employee gets deleted so the list stays correct
+const resetDepartmentId = () => {
+    //Grab all of the employees
+    connection.query('SELECT * FROM department', (err, result) => {
+        if(err) throw err;
+        //Create holder variable for the entries
+        let backup = [];
+        //Loops through the results, pushing each entry into the backup array
+        for(let i = 0; i < result.length; i++) {
+            let holder = {
+                name: result[i].name
+            }
+            backup.push(holder);
+        }
+        //Remove all rows from the table
+        connection.query(`TRUNCATE TABLE department`, (err) => {
+            if(err) throw err;
+            //Insert into the table, the array of objects we just created, now with a reset auto incrememnt count for id
+            connection.query('INSERT INTO role SET ?', backup, (err) => {
+                if(err) throw err;
             })
         })
     })
