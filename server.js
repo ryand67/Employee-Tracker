@@ -24,7 +24,7 @@ const startApp = () => {
     inquirer.prompt([{
         type: 'list',
         message: 'What would you like to do?',
-        choices: ['View All Employees', 'View All Employees by Department', 'View All Employees by Role', 'View Roles' , 'Add Employee', 'Add Role', 'Add Department' , 'Update Employee Role', 'Remove Employee' , 'View Total Utilized Budget', 'Exit'],
+        choices: ['View All Employees', 'View All Employees by Department', 'View All Employees by Role', 'View Roles', 'View Departments', 'Add Employee', 'Add Role', 'Add Department' , 'Update Employee Role', 'Remove Employee' , 'View Total Utilized Budget', 'Exit'],
         name: 'choice'
     }]).then((response) => {
         //Trigger function based on menu option
@@ -50,6 +50,8 @@ const startApp = () => {
             viewRoles();
         } else if(response.choice === 'Add Department') {
             addDepartment();
+        } else if(response.choice === 'View Departments') {
+            viewDepartments();
         }
     })
 }
@@ -306,4 +308,14 @@ const addDepartment = () => {
         })
     })
     startApp();
+}
+
+const viewDepartments = () => {
+    connection.query('SELECT id, name FROM department', (err, result) => {
+        if(err) throw err;
+        for(let i = 0; i < result.length; i++) {
+            console.log(`${result[i].id}) ${result[i].name}`)
+        }
+    })
+    setTimeout(startApp, 1000);
 }
