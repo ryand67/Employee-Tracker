@@ -62,14 +62,14 @@ const startApp = () => {
 
 //Grabs array of available roles
 const getRoles = () => {
-    let positions = new Array();
+    let posArr = new Array();
     connection.query('SELECT title FROM role', (err, result) => {
         if(err) throw err;
         for(let i = 0; i < result.length; i++) {
-            positions.push(result[i].title);
+            posArr.push(result[i].title);
         }
     })
-    return positions;
+    return posArr;
 }
 
 let positions = getRoles();
@@ -252,6 +252,7 @@ const utilizedBudget = () => {
     setTimeout(startApp, 1000);
 }
 
+//Adds role entry
 const addRole = () => {
     connection.query('SELECT * FROM department', (err, result) => {
         if(err) throw err;
@@ -289,6 +290,7 @@ const addRole = () => {
     })
 }
 
+//Views available roles
 const viewRoles = () => {
     connection.query('SELECT title, id FROM role', (err, result) => {
         if(err) throw err;
@@ -343,7 +345,6 @@ const removeRole = () => {
             let choiceId = parseInt(response.choice.charAt(0));
             connection.query('DELETE FROM role WHERE id=?', choiceId, (err) => {
                 if(err) throw err;
-                positions = getRoles();
                 resetRoleId();
                 startApp();
             })
@@ -351,7 +352,7 @@ const removeRole = () => {
     })
 }
 
-//Resets the id so when an employee gets deleted so the list stays correct
+//Resets the id so when an role gets deleted so the list stays correct
 const resetRoleId = () => {
     //Grab all of the employees
     connection.query('SELECT * FROM role', (err, result) => {
@@ -373,11 +374,13 @@ const resetRoleId = () => {
             //Insert into the table, the array of objects we just created, now with a reset auto incrememnt count for id
             connection.query('INSERT INTO role SET ?', backup, (err) => {
                 if(err) throw err;
+                positions = getRoles();
             })
         })
     })
 }
 
+//Removes department entry
 const removeDepartment = () => {
     connection.query('SELECT * FROM department', (err, result) => {
         if(err) throw err;
@@ -402,7 +405,7 @@ const removeDepartment = () => {
     })
 }
 
-//Resets the id so when an employee gets deleted so the list stays correct
+//Resets the id so when a department gets deleted so the list stays correct
 const resetDepartmentId = () => {
     //Grab all of the employees
     connection.query('SELECT * FROM department', (err, result) => {
