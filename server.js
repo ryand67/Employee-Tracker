@@ -180,14 +180,15 @@ const employeeSearch = (query) => {
     //Join the role table matching role_id with role.id
     //Join the department table where department_id equals department.id
     //Orders by the query passed into the function using a template literal because the placeholder wasn't working
-    connection.query(`SELECT employee.id, employee.first_name, employee.last_name, role.title, role.salary, department.name FROM employee LEFT JOIN role ON employee.role_id=role.id INNER JOIN department ON role.department_id = department.id ORDER BY ${query}`, (err, result) => {
+    connection.query(`SELECT employee.id, employee.first_name, employee.last_name, role.title, role.salary, department.name FROM employee LEFT JOIN role ON employee.role_id=role.id LEFT JOIN department ON role.department_id = department.id ORDER BY ${query}`, (err, result) => {
         if(err) throw err;
         //If there aren't any results display this message;
         if(result.length === 0) {
             console.log('NOTHING TO DISPLAY');
+        } else {
+            //console.table the results, wait one second to make sure the main menu rendering doesn't mess with the table rendering
+            console.table(result);
         }
-        //console.table the results, wait one second to make sure the main menu rendering doesn't mess with the table rendering
-        console.table(result);
         setTimeout(startApp, 1000);
     })
 }
@@ -312,9 +313,9 @@ const addDepartment = () => {
         }
         connection.query(`INSERT INTO department SET ?`, holder, (err) => {
             if(err) throw err;
+            startApp();
         })
     })
-    startApp();
 }
 
 const viewDepartments = () => {
