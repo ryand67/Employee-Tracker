@@ -20,6 +20,7 @@ connection.connect((err) => {
 
 //Starts app
 const startApp = () => {
+    positions = getRoles();
     //Prompt user and ask what they'd like to do
     inquirer.prompt([{
         type: 'list',
@@ -229,8 +230,6 @@ const updateEmployee = (query) => {
                     //Launch main menu
                     startApp();
                 })
-            } else if(query === 'manager') {
-
             }
         })
     })
@@ -287,6 +286,7 @@ const addRole = () => {
             }, (err) => {
                 if(err) throw err;
                 positions = getRoles();
+                resetRoleId();
             })
             startApp();
         })
@@ -344,36 +344,7 @@ const removeRole = () => {
             let choiceId = parseInt(response.choice.charAt(0));
             connection.query('DELETE FROM role WHERE id=?', choiceId, (err) => {
                 if(err) throw err;
-                resetRoleId();
                 startApp();
-            })
-        })
-    })
-}
-
-//Resets the id so when an role gets deleted so the list stays correct
-const resetRoleId = () => {
-    //Grab all of the employees
-    connection.query('SELECT * FROM role', (err, result) => {
-        if(err) throw err;
-        //Create holder variable for the entries
-        let backup = [];
-        //Loops through the results, pushing each entry into the backup array
-        for(let i = 0; i < result.length; i++) {
-            let holder = {
-                title: result[i].title,
-                salary: result[i].salary,
-                department_id: result[i].department_id
-            }
-            backup.push(holder);
-        }
-        //Remove all rows from the table
-        connection.query(`TRUNCATE TABLE role`, (err) => {
-            if(err) throw err;
-            //Insert into the table, the array of objects we just created, now with a reset auto incrememnt count for id
-            connection.query('INSERT INTO role SET ?', backup, (err) => {
-                if(err) throw err;
-                positions = getRoles();
             })
         })
     })
@@ -397,32 +368,6 @@ const removeDepartment = () => {
         }]).then((response) => {
             let chioceId = response.choice.charAt(0);
             connection.query('DELETE FROM department WHERE id=?', choiceId, (err) => {
-                if(err) throw err;
-                resetDepartmentId();
-            })
-        })
-    })
-}
-
-//Resets the id so when a department gets deleted so the list stays correct
-const resetDepartmentId = () => {
-    //Grab all of the employees
-    connection.query('SELECT * FROM department', (err, result) => {
-        if(err) throw err;
-        //Create holder variable for the entries
-        let backup = [];
-        //Loops through the results, pushing each entry into the backup array
-        for(let i = 0; i < result.length; i++) {
-            let holder = {
-                name: result[i].name
-            }
-            backup.push(holder);
-        }
-        //Remove all rows from the table
-        connection.query(`TRUNCATE TABLE department`, (err) => {
-            if(err) throw err;
-            //Insert into the table, the array of objects we just created, now with a reset auto incrememnt count for id
-            connection.query('INSERT INTO role SET ?', backup, (err) => {
                 if(err) throw err;
             })
         })
