@@ -15,6 +15,7 @@ const connection = mysql.createConnection({
 //Connect to database and start app
 connection.connect((err) => {
     if(err) throw err;
+    console.log('Welcome to the Employee Tracker!');
     startApp();
 })
 
@@ -186,6 +187,7 @@ const employeeSearch = (query) => {
         //If there aren't any results display this message;
         if(result.length === 0) {
             console.log('NOTHING TO DISPLAY');
+            startApp();
         } else {
             //console.table the results
             console.table(result);
@@ -286,7 +288,6 @@ const addRole = () => {
             }, (err) => {
                 if(err) throw err;
                 positions = getRoles();
-                resetRoleId();
             })
             startApp();
         })
