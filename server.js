@@ -187,10 +187,10 @@ const employeeSearch = (query) => {
         if(result.length === 0) {
             console.log('NOTHING TO DISPLAY');
         } else {
-            //console.table the results, wait one second to make sure the main menu rendering doesn't mess with the table rendering
+            //console.table the results
             console.table(result);
+            startApp();
         }
-        setTimeout(startApp, 1000);
     })
 }
 
@@ -249,9 +249,9 @@ const utilizedBudget = () => {
         console.log(`
         TOTAL UTILIZED BUDGET: ${totalBudget}
         `)
+        startApp();
     })
     //Wait one second to launch main menu to not interfere with console logs
-    setTimeout(startApp, 1000);
 }
 
 //Adds role entry
@@ -298,8 +298,8 @@ const viewRoles = () => {
     connection.query('SELECT * FROM role', (err, result) => {
         if(err) throw err;
         console.table(result);
+        startApp();
     })
-    setTimeout(startApp, 1000);
 }
 
 const addDepartment = () => {
@@ -322,8 +322,8 @@ const viewDepartments = () => {
     connection.query('SELECT * FROM department', (err, result) => {
         if(err) throw err;
         console.table(result);
+        startApp();
     })
-    setTimeout(startApp, 1000);
 }
 
 const removeRole = () => {
