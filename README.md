@@ -15,4 +15,4 @@ Run npm i from the command line to install the needed npm packages.
 Run the program by typing node server.js in the command line, then navigate the menus by using the arrow keys and keyboard.
 
 ## Screenshots
-[employee-tracker-screenshot](./Assets/employeeTrackerScreenShot.png)
+![employee-tracker-screenshot](./Assets/employeeTrackerScreenShot.png)
